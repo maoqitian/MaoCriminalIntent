@@ -14,8 +14,12 @@ import android.widget.Checkable;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import mao.com.maocriminalintent.R;
 import mao.com.maocriminalintent.model.Crime;
+import mao.com.maocriminalintent.util.MyUtils;
 
 /**
  * Created by maoqi on 2018/2/23 0023.
@@ -57,7 +61,7 @@ public class CrimeFragment extends Fragment {
 
             }
         });
-        mDateButton.setText(mCrime.getmDate().toString());
+        mDateButton.setText(MyUtils.getFormatDate(mCrime.getmDate()));
         mDateButton.setEnabled(false);
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
