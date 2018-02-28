@@ -34,6 +34,11 @@ public class CrimeLab {
             Crime crime = new Crime();
             crime.setmTitle("Crime #" + i);
             crime.setmSolved(i % 2 == 0); // Every other one
+            if(i==2||i==4||i==6){
+                crime.setmRequiresPolice(1);
+            }else {
+                crime.setmRequiresPolice(0);
+            }
             mCrimes.add(crime);
             }
     }
