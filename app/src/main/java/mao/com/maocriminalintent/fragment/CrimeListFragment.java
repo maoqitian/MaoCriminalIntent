@@ -1,5 +1,6 @@
 package mao.com.maocriminalintent.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,7 +14,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.UUID;
 
+import mao.com.maocriminalintent.CrimeActivity;
+import mao.com.maocriminalintent.CrimePagerActivity;
 import mao.com.maocriminalintent.R;
 import mao.com.maocriminalintent.instance.CrimeLab;
 import mao.com.maocriminalintent.model.Crime;
@@ -30,6 +34,9 @@ public class CrimeListFragment extends Fragment {
 
     private CrimeAdapter mAdapter;
 
+    private static final int REQUEST_CRIME = 1;//CrimeFragment 处理结果返回状态码,根据状态码判断对应的Crime对象进行高效刷新RecyclerView
+
+    private int position;//更改对应Item 的位置
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -42,11 +49,30 @@ public class CrimeListFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode==REQUEST_CRIME){
+           position= (int) data.getSerializableExtra("mPosition");
+        }
+    }
+
     private void updateUI() {
         CrimeLab crimeLab=CrimeLab.getInstance(getActivity());
         List<Crime> crimes = crimeLab.getmCrimes();
-        mAdapter=new CrimeAdapter(crimes);
-        mCrimeRecyclerView.setAdapter(mAdapter);
+        if(mAdapter==null){//适配器没有则创建
+            mAdapter=new CrimeAdapter(crimes);
+            mCrimeRecyclerView.setAdapter(mAdapter);
+        }else {//否则根据更改的数据刷新 RecyclerView 刷新对应的位置
+            //mAdapter.notifyDataSetChanged();
+            mAdapter.notifyItemChanged(position);
+        }
+
     }
 
 
@@ -62,7 +88,7 @@ public class CrimeListFragment extends Fragment {
             super(inflater.inflate(R.layout.list_item_crime,parent,false));
             mTitleTextView=itemView.findViewById(R.id.crime_title);
             mDateTextView=itemView.findViewById(R.id.crime_date);
-            mSolvedImageView = (ImageView) itemView.findViewById(R.id.crime_solved);
+            mSolvedImageView = itemView.findViewById(R.id.crime_solved);
             itemView.setOnClickListener(this);
         }
 
@@ -75,7 +101,11 @@ public class CrimeListFragment extends Fragment {
 
         @Override
         public void onClick(View view) {
-            Toast.makeText(getActivity(),mCrime.getmTitle() + " clicked!", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(),mCrime.getmTitle() + " clicked!", Toast.LENGTH_SHORT).show();
+            //Intent intent=new Intent(getActivity(), CrimeActivity.class);
+            //Intent intent=CrimeActivity.newIntent(getActivity(),mCrime.getmId());
+            Intent intent= CrimePagerActivity.newIntent(getActivity(),mCrime.getmId());
+            startActivityForResult(intent,REQUEST_CRIME);
         }
     }
     //需要联系警方的holder
@@ -100,6 +130,8 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onClick(View view) {
             Toast.makeText(getActivity(),mCrime.getmTitle() + " clicked2!", Toast.LENGTH_SHORT).show();
+            /*Intent intent=CrimeActivity.newIntent(getActivity(),mCrime.getmId());
+            startActivity(intent);*/
         }
     }
 

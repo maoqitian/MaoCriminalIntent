@@ -8,7 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 
 /**
  * Created by maoqi on 2018/2/25 0025.
- * 抽象基类
+ * 抽象基类  对应子类加载对应的Fragment
  */
 
 public abstract class SingleFragmentActivity extends AppCompatActivity {

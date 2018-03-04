@@ -16,6 +16,10 @@ public class Crime {
     private boolean mSolved;
     private int mRequiresPolice;
 
+
+
+    private int position;
+
     public Crime(){
         mId=UUID.randomUUID();
         mDate=new Date();
@@ -59,5 +63,13 @@ public class Crime {
 
     public void setmRequiresPolice(int mRequiresPolice) {
         this.mRequiresPolice = mRequiresPolice;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
     }
 }
