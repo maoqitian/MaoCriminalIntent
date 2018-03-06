@@ -1,5 +1,6 @@
 package mao.com.maocriminalintent;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crime_pager);
         mViewPager=findViewById(R.id.activity_crime_page_view_pager);
+        //获取对应的Crime uuid 使CrimeFragment 加载对应Crime
         UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_CRIME_ID);
         mCrimes= CrimeLab.getInstance(this).getmCrimes();
         FragmentManager fragmentManager=getSupportFragmentManager();

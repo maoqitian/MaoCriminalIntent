@@ -4,4 +4,5 @@
     <string name="crime_title_label">标题</string>
     <string name="crime_details_label">详细</string>
     <string name="crime_solved_label">解决</string>
+    <string name="date_picker_title">陋习日期:</string>
 </resources>

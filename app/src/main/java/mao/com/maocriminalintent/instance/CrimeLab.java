@@ -3,7 +3,9 @@ package mao.com.maocriminalintent.instance;
 import android.content.Context;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import mao.com.maocriminalintent.model.Crime;
@@ -18,8 +20,8 @@ public class CrimeLab {
     private static CrimeLab sCrimeLab;
 
 
-
-    private List<Crime> mCrimes;
+    private Map<UUID,Crime> mCrimes;//使用LinkedHashMap优化 getCrime方法匹配
+    //private List<Crime> mCrimes;
 
     public static CrimeLab getInstance(Context context){
         if(sCrimeLab==null){
@@ -29,7 +31,7 @@ public class CrimeLab {
     }
 
     private CrimeLab(Context context){
-        mCrimes=new ArrayList<>();
+        mCrimes=new  LinkedHashMap<>();
         for (int i = 0; i < 100; i++) {   //先批量存入100个 毫无个性的Crime对象
             Crime crime = new Crime();
             crime.setmTitle("Crime #" + i);
@@ -40,24 +42,25 @@ public class CrimeLab {
             }else {
                 crime.setmRequiresPolice(0);
             }
-            mCrimes.add(crime);
+            mCrimes.put(crime.getmId(),crime);
             }
     }
 
     public List<Crime> getmCrimes() {
-        return mCrimes;
+        return new ArrayList<>(mCrimes.values());
     }
 
-    public void setmCrimes(List<Crime> mCrimes) {
+    /*public void setmCrimes(List<Crime> mCrimes) {
         this.mCrimes = mCrimes;
-    }
+    }*/
 
     public Crime getCrime(UUID uuid){
-        for (Crime crime:mCrimes) {
+       /* for (Crime crime:mCrimes) {
             if(crime.getmId().equals(uuid)){
                 return crime;
             }
         }
-        return null;
+        return null;*/
+       return mCrimes.get(uuid);
     }
 }

@@ -14,9 +14,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
-import java.util.UUID;
-
-import mao.com.maocriminalintent.CrimeActivity;
 import mao.com.maocriminalintent.CrimePagerActivity;
 import mao.com.maocriminalintent.R;
 import mao.com.maocriminalintent.instance.CrimeLab;
@@ -34,9 +31,9 @@ public class CrimeListFragment extends Fragment {
 
     private CrimeAdapter mAdapter;
 
-    private static final int REQUEST_CRIME = 1;//CrimeFragment 处理结果返回状态码,根据状态码判断对应的Crime对象进行高效刷新RecyclerView
 
-    private int position;//更改对应Item 的位置
+    private int currentPosition = -1;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -55,12 +52,7 @@ public class CrimeListFragment extends Fragment {
         updateUI();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode==REQUEST_CRIME){
-           position= (int) data.getSerializableExtra("mPosition");
-        }
-    }
+
 
     private void updateUI() {
         CrimeLab crimeLab=CrimeLab.getInstance(getActivity());
@@ -70,7 +62,11 @@ public class CrimeListFragment extends Fragment {
             mCrimeRecyclerView.setAdapter(mAdapter);
         }else {//否则根据更改的数据刷新 RecyclerView 刷新对应的位置
             //mAdapter.notifyDataSetChanged();
-            mAdapter.notifyItemChanged(position);
+            if (currentPosition != -1) {
+                mAdapter.notifyItemChanged(currentPosition);
+            } else {
+                mAdapter.notifyDataSetChanged();
+            }
         }
 
     }
@@ -105,7 +101,8 @@ public class CrimeListFragment extends Fragment {
             //Intent intent=new Intent(getActivity(), CrimeActivity.class);
             //Intent intent=CrimeActivity.newIntent(getActivity(),mCrime.getmId());
             Intent intent= CrimePagerActivity.newIntent(getActivity(),mCrime.getmId());
-            startActivityForResult(intent,REQUEST_CRIME);
+            startActivity(intent);
+            currentPosition=this.getAdapterPosition();
         }
     }
     //需要联系警方的holder

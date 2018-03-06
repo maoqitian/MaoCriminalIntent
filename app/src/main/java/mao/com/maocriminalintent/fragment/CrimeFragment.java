@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -14,10 +15,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+
+import java.util.Date;
 import java.util.UUID;
 
-import mao.com.maocriminalintent.CrimeActivity;
-import mao.com.maocriminalintent.CrimePagerActivity;
 import mao.com.maocriminalintent.R;
 import mao.com.maocriminalintent.instance.CrimeLab;
 import mao.com.maocriminalintent.model.Crime;
@@ -31,7 +32,9 @@ import mao.com.maocriminalintent.util.MyUtils;
 public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
+    private static final String DIALOG_DATE = "DialogDate";//对话框Fragment的 tag
 
+    private static final int REQUEST_DATE = 0;//DatePickerFragment 数据返回请求码
     private Crime mCrime;
     private EditText mTitleField;
     private Button mDateButton;
@@ -45,7 +48,6 @@ public class CrimeFragment extends Fragment {
         //改为从fragment的argument中获取UUID,这样CrimeFragment类变得通用，而不依靠特定的Activity
         UUID crimeId= (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime= CrimeLab.getInstance(getActivity()).getCrime(crimeId);
-        returnResult();
     }
 
     //附加argument给 fragment
@@ -81,8 +83,16 @@ public class CrimeFragment extends Fragment {
 
             }
         });
-        mDateButton.setText(MyUtils.getFormatDate(mCrime.getmDate()));
-        mDateButton.setEnabled(false);
+        updateDate();
+        mDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fragmentManager=getFragmentManager();
+                DatePickerFragment dialog=DatePickerFragment.newInstance(mCrime.getmDate());
+                dialog.setTargetFragment(CrimeFragment.this,REQUEST_DATE);
+                dialog.show(fragmentManager,DIALOG_DATE);
+            }
+        });
         mSolvedCheckBox.setChecked(mCrime.ismSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -92,9 +102,21 @@ public class CrimeFragment extends Fragment {
         });
         return view;
     }
-    // Fragment 没有setResult(...),方法应让托管activity返回结果值
-    public void returnResult() {
-        getActivity().setResult(CrimePagerActivity.RESULT_OK,new Intent().putExtra("mPosition",mCrime.getPosition()));
+
+    private void updateDate() { //更新日期
+        mDateButton.setText(MyUtils.getFormatDate(mCrime.getmDate()));
     }
 
+    //接收DatePickerFragment 同步设置的日期信息
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode!= Activity.RESULT_OK){
+            return;
+        }
+        if(requestCode==REQUEST_DATE){
+           Date date= (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+           mCrime.setmDate(date);
+           updateDate();
+        }
+    }
 }
