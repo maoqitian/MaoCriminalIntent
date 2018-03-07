@@ -33,11 +33,13 @@ public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";//对话框Fragment的 tag
-
+    private static final String DIALOG_TIME = "DialogTime";//对话框Fragment的 tag
     private static final int REQUEST_DATE = 0;//DatePickerFragment 数据返回请求码
+    private static final int REQUEST_TIME = 1;//TimePickerFragment 数据返回请求码
     private Crime mCrime;
     private EditText mTitleField;
     private Button mDateButton;
+    private Button mTimeButton;
     private CheckBox mSolvedCheckBox;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,6 +69,7 @@ public class CrimeFragment extends Fragment {
         mTitleField.setText(mCrime.getmTitle());
         mSolvedCheckBox = view.findViewById(R.id.crime_solved);
         mDateButton = view.findViewById(R.id.crime_date);
+        mTimeButton=view.findViewById(R.id.crime_time);
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -93,6 +96,15 @@ public class CrimeFragment extends Fragment {
                 dialog.show(fragmentManager,DIALOG_DATE);
             }
         });
+        mTimeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fragmentManager=getFragmentManager();
+                TimePickerFragment timePickerFragment=TimePickerFragment.newInstance(mCrime.getmDate());
+                timePickerFragment.setTargetFragment(CrimeFragment.this,REQUEST_TIME);
+                timePickerFragment.show(fragmentManager,DIALOG_TIME);
+            }
+        });
         mSolvedCheckBox.setChecked(mCrime.ismSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -117,6 +129,11 @@ public class CrimeFragment extends Fragment {
            Date date= (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
            mCrime.setmDate(date);
            updateDate();
+        }
+        else if(requestCode==REQUEST_TIME){
+            Date date= (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_TIME);
+            mCrime.setmDate(date);
+            updateDate();
         }
     }
 }
