@@ -4,9 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -28,11 +33,23 @@ import mao.com.maocriminalintent.util.MyUtils;
 public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
-
     private CrimeAdapter mAdapter;
 
 
-    private int currentPosition = -1;
+    private int currentPosition = -1;//选择操作Crime的位置
+    private boolean mSubtitleVisible;//是否显示子标题
+
+    private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";//屏幕旋转获取Title显示状态常量
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //当CrimeListActivity接收到操作系统的onCreateOptionsMenu(...)方法回调请求时，
+        // 我们 必须明确告诉FragmentManager：
+        // 其管理的fragment应接收onCreateOptionsMenu(...)方法的 调用指令。要通知FragmentManager，
+        Log.e("毛麒添","CrimeListFragment onCreate");
+        setHasOptionsMenu(true);
+    }
 
     @Nullable
     @Override
@@ -40,10 +57,55 @@ public class CrimeListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
         mCrimeRecyclerView=view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
+        Log.e("毛麒添","onCreateView onCreate");
+        if(savedInstanceState!=null){
+            mSubtitleVisible=savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
+        }
         updateUI();
-
         return view;
+    }
+    //关联菜单
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_crime_list,menu);
+        MenuItem item = menu.findItem(R.id.show_subtitle);
+        if(mSubtitleVisible){
+            item.setTitle(R.string.hide_subtitle);
+        }else {
+            item.setTitle(R.string.show_subtitle);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.new_crime:
+                Crime crime=new Crime();
+                CrimeLab.getInstance(getActivity()).add(crime);
+                Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
+                startActivityForResult(intent,0);
+                return true;
+            case R.id.show_subtitle:
+                mSubtitleVisible=!mSubtitleVisible;
+                getActivity().invalidateOptionsMenu();//更新
+                updateSubtitle();
+                return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+
+        }
+    }
+    //设置工具栏子标题 显示陋习个数
+    public void updateSubtitle(){
+         CrimeLab crimeLab=CrimeLab.getInstance(getActivity());
+        int size = crimeLab.getmCrimes().size();
+        String string = getResources().getQuantityString(R.plurals.subtitle_plural, size,size);
+        if (!mSubtitleVisible){
+            string=null;//隐藏子标题
+        }
+        AppCompatActivity appCompatActivity= (AppCompatActivity) getActivity();
+        appCompatActivity.getSupportActionBar().setSubtitle(string);
     }
 
     @Override
@@ -54,23 +116,28 @@ public class CrimeListFragment extends Fragment {
 
 
 
-    private void updateUI() {
+    public void updateUI() {
         CrimeLab crimeLab=CrimeLab.getInstance(getActivity());
         List<Crime> crimes = crimeLab.getmCrimes();
         if(mAdapter==null){//适配器没有则创建
             mAdapter=new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         }else {//否则根据更改的数据刷新 RecyclerView 刷新对应的位置
-            //mAdapter.notifyDataSetChanged();
             if (currentPosition != -1) {
                 mAdapter.notifyItemChanged(currentPosition);
             } else {
                 mAdapter.notifyDataSetChanged();
             }
         }
-
+        updateSubtitle();
     }
 
+    //旋转屏幕保存标题栏状态
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(SAVED_SUBTITLE_VISIBLE,mSubtitleVisible);
+    }
 
     //实现RecyclerView 的ViewHodler 和Adapter
     //普通holder
@@ -101,6 +168,10 @@ public class CrimeListFragment extends Fragment {
             //Intent intent=new Intent(getActivity(), CrimeActivity.class);
             //Intent intent=CrimeActivity.newIntent(getActivity(),mCrime.getmId());
             Intent intent= CrimePagerActivity.newIntent(getActivity(),mCrime.getmId());
+            Bundle args = new Bundle();
+            args.putSerializable("crime_id",mCrime.getmId());
+                        CrimeListFragment listFragment = new CrimeListFragment();
+                       listFragment.setArguments(args);
             startActivity(intent);
             currentPosition=this.getAdapterPosition();
         }

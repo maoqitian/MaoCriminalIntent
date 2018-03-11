@@ -29,7 +29,7 @@
         android:id="@+id/crime_time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="设置陋习开始时间"
+        android:text="@string/set_crime_start_time"
         />
     <CheckBox
         android:id="@+id/crime_solved"

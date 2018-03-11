@@ -3,6 +3,7 @@ package mao.com.maocriminalintent.instance;
 import android.content.Context;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class CrimeLab {
 
     private CrimeLab(Context context){
         mCrimes=new  LinkedHashMap<>();
-        for (int i = 0; i < 100; i++) {   //先批量存入100个 毫无个性的Crime对象
+        /*for (int i = 0; i < 100; i++) {   //先批量存入100个 毫无个性的Crime对象
             Crime crime = new Crime();
             crime.setmTitle("Crime #" + i);
             crime.setmSolved(i % 2 == 0); // Every other one
@@ -43,7 +44,7 @@ public class CrimeLab {
                 crime.setmRequiresPolice(0);
             }
             mCrimes.put(crime.getmId(),crime);
-            }
+            }*/
     }
 
     public List<Crime> getmCrimes() {
@@ -63,4 +64,17 @@ public class CrimeLab {
         return null;*/
        return mCrimes.get(uuid);
     }
+
+    public void add (Crime crime){
+        mCrimes.put(crime.getmId(),crime);
+    }
+
+    public void deleteCrime(UUID uuid){
+        for (Iterator<Map.Entry<UUID,Crime>> it = mCrimes.entrySet().iterator(); it.hasNext();){
+            Map.Entry<UUID,Crime> item = it.next();
+            if(item.getKey().equals(uuid)){
+                it.remove();
+            }
+         }
+        }
 }

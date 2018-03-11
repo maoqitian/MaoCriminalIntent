@@ -1,5 +1,6 @@
 package mao.com.maocriminalintent;
 
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
 import mao.com.maocriminalintent.fragment.CrimeListFragment;
@@ -10,6 +11,12 @@ import mao.com.maocriminalintent.fragment.CrimeListFragment;
  */
 
 public class CrimeListActivity extends SingleFragmentActivity {
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     protected Fragment createFragment() {

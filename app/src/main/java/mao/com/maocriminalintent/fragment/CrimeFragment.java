@@ -9,6 +9,9 @@ import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -19,6 +22,8 @@ import android.widget.EditText;
 import java.util.Date;
 import java.util.UUID;
 
+import mao.com.maocriminalintent.CrimeListActivity;
+import mao.com.maocriminalintent.CrimePagerActivity;
 import mao.com.maocriminalintent.R;
 import mao.com.maocriminalintent.instance.CrimeLab;
 import mao.com.maocriminalintent.model.Crime;
@@ -41,14 +46,16 @@ public class CrimeFragment extends Fragment {
     private Button mDateButton;
     private Button mTimeButton;
     private CheckBox mSolvedCheckBox;
+    private UUID crimeId;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         //mCrime=new Crime();
         //Intent 的Extra 已经存储了对应的crimeId 根据这个UUID 来获取对应的 Crime的对象
         //UUID crimeId  = (UUID) getActivity().getIntent().getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID);
         //改为从fragment的argument中获取UUID,这样CrimeFragment类变得通用，而不依靠特定的Activity
-        UUID crimeId= (UUID) getArguments().getSerializable(ARG_CRIME_ID);
+        crimeId= (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime= CrimeLab.getInstance(getActivity()).getCrime(crimeId);
     }
 
@@ -113,6 +120,29 @@ public class CrimeFragment extends Fragment {
             }
         });
         return view;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_crime_item,menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.delete_crime:
+                UUID id = (UUID)getArguments().getSerializable("crime_id");
+                if(id!=null)
+                CrimeLab.getInstance(getActivity()).deleteCrime(id);
+                Intent intent = new Intent(getActivity(), CrimeListActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                getActivity().finish();
+                return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+        }
     }
 
     private void updateDate() { //更新日期
