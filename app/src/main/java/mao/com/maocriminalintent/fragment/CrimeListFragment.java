@@ -14,7 +14,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +43,10 @@ public class CrimeListFragment extends Fragment {
 
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";//屏幕旋转获取Title显示状态常量
 
+    private RelativeLayout mEmptyLayout;//陋习为空的界面
+    private Button mAddBtn;
+
+    private CrimeLab crimeLab;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +55,7 @@ public class CrimeListFragment extends Fragment {
         // 其管理的fragment应接收onCreateOptionsMenu(...)方法的 调用指令。要通知FragmentManager，
         Log.e("毛麒添","CrimeListFragment onCreate");
         setHasOptionsMenu(true);
+        crimeLab=CrimeLab.getInstance(getActivity());
     }
 
     @Nullable
@@ -57,7 +64,8 @@ public class CrimeListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
         mCrimeRecyclerView=view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        Log.e("毛麒添","onCreateView onCreate");
+        mEmptyLayout=view.findViewById(R.id.rl_empty);
+        mAddBtn=view.findViewById(R.id.add_button);
         if(savedInstanceState!=null){
             mSubtitleVisible=savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
         }
@@ -84,7 +92,7 @@ public class CrimeListFragment extends Fragment {
                 Crime crime=new Crime();
                 CrimeLab.getInstance(getActivity()).add(crime);
                 Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
-                startActivityForResult(intent,0);
+                startActivity(intent);
                 return true;
             case R.id.show_subtitle:
                 mSubtitleVisible=!mSubtitleVisible;
@@ -98,7 +106,6 @@ public class CrimeListFragment extends Fragment {
     }
     //设置工具栏子标题 显示陋习个数
     public void updateSubtitle(){
-         CrimeLab crimeLab=CrimeLab.getInstance(getActivity());
         int size = crimeLab.getmCrimes().size();
         String string = getResources().getQuantityString(R.plurals.subtitle_plural, size,size);
         if (!mSubtitleVisible){
@@ -117,8 +124,23 @@ public class CrimeListFragment extends Fragment {
 
 
     public void updateUI() {
-        CrimeLab crimeLab=CrimeLab.getInstance(getActivity());
         List<Crime> crimes = crimeLab.getmCrimes();
+        if(crimes.size()==0){
+            mEmptyLayout.setVisibility(View.VISIBLE);
+            mCrimeRecyclerView.setVisibility(View.GONE);
+            mAddBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Crime crime=new Crime();
+                    CrimeLab.getInstance(getActivity()).add(crime);
+                    Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
+                    startActivity(intent);
+                }
+            });
+        }else {
+            mEmptyLayout.setVisibility(View.GONE);
+            mCrimeRecyclerView.setVisibility(View.VISIBLE);
+        }
         if(mAdapter==null){//适配器没有则创建
             mAdapter=new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);

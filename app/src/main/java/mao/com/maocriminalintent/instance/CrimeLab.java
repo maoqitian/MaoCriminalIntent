@@ -1,6 +1,7 @@
 package mao.com.maocriminalintent.instance;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import mao.com.maocriminalintent.database.CrimeBaseHelper;
 import mao.com.maocriminalintent.model.Crime;
 
 /**
@@ -24,6 +26,10 @@ public class CrimeLab {
     private Map<UUID,Crime> mCrimes;//使用LinkedHashMap优化 getCrime方法匹配
     //private List<Crime> mCrimes;
 
+
+    private Context mContext;
+    private SQLiteDatabase mDatabase;
+
     public static CrimeLab getInstance(Context context){
         if(sCrimeLab==null){
             sCrimeLab=new CrimeLab(context);
@@ -32,6 +38,8 @@ public class CrimeLab {
     }
 
     private CrimeLab(Context context){
+        mContext=context.getApplicationContext();
+        mDatabase=new CrimeBaseHelper(mContext).getWritableDatabase();
         mCrimes=new  LinkedHashMap<>();
         /*for (int i = 0; i < 100; i++) {   //先批量存入100个 毫无个性的Crime对象
             Crime crime = new Crime();
