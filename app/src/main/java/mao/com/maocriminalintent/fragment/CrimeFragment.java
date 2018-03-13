@@ -149,6 +149,13 @@ public class CrimeFragment extends Fragment {
         mDateButton.setText(MyUtils.getFormatDate(mCrime.getmDate()));
     }
 
+    //操作完之后更新数据库
+    @Override
+    public void onPause() {
+        super.onPause();
+        CrimeLab.getInstance(getActivity()).updateCrime(mCrime);
+    }
+
     //接收DatePickerFragment 同步设置的日期信息
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

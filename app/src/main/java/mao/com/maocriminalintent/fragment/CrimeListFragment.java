@@ -128,7 +128,7 @@ public class CrimeListFragment extends Fragment {
         if(crimes.size()==0){
             mEmptyLayout.setVisibility(View.VISIBLE);
             mCrimeRecyclerView.setVisibility(View.GONE);
-            mAddBtn.setOnClickListener(new View.OnClickListener() {
+            mAddBtn.setOnClickListener(new View.OnClickListener() {//当数据库中没有数据的时候添加一条新数据
                 @Override
                 public void onClick(View view) {
                     Crime crime=new Crime();
@@ -145,6 +145,7 @@ public class CrimeListFragment extends Fragment {
             mAdapter=new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         }else {//否则根据更改的数据刷新 RecyclerView 刷新对应的位置
+            mAdapter.setCrimes(crimes);
             if (currentPosition != -1) {
                 mAdapter.notifyItemChanged(currentPosition);
             } else {
@@ -230,6 +231,10 @@ public class CrimeListFragment extends Fragment {
         private List<Crime> mCrimes;
         public CrimeAdapter(List<Crime> crimes){
               mCrimes=crimes;
+        }
+
+        public void setCrimes(List<Crime> crimes){
+            this.mCrimes=crimes;
         }
 
         @Override

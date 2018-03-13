@@ -21,7 +21,13 @@ public class Crime {
     private int position;
 
     public Crime(){
-        mId=UUID.randomUUID();
+        this(UUID.randomUUID());
+        /*mId=UUID.randomUUID();
+        mDate=new Date();*/
+    }
+
+    public Crime(UUID uuid){
+        mId=uuid;
         mDate=new Date();
     }
 

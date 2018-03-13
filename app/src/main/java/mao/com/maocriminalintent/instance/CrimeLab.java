@@ -1,6 +1,8 @@
 package mao.com.maocriminalintent.instance;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
@@ -11,6 +13,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import mao.com.maocriminalintent.database.CrimeBaseHelper;
+import mao.com.maocriminalintent.database.CrimeCursorWrapper;
+import mao.com.maocriminalintent.database.CrimeDbSchema.CrimeTable;
 import mao.com.maocriminalintent.model.Crime;
 
 /**
@@ -23,7 +27,7 @@ public class CrimeLab {
     private static CrimeLab sCrimeLab;
 
 
-    private Map<UUID,Crime> mCrimes;//使用LinkedHashMap优化 getCrime方法匹配
+    //private Map<UUID,Crime> mCrimes;//使用LinkedHashMap优化 getCrime方法匹配
     //private List<Crime> mCrimes;
 
 
@@ -40,7 +44,7 @@ public class CrimeLab {
     private CrimeLab(Context context){
         mContext=context.getApplicationContext();
         mDatabase=new CrimeBaseHelper(mContext).getWritableDatabase();
-        mCrimes=new  LinkedHashMap<>();
+        //mCrimes=new  LinkedHashMap<>();
         /*for (int i = 0; i < 100; i++) {   //先批量存入100个 毫无个性的Crime对象
             Crime crime = new Crime();
             crime.setmTitle("Crime #" + i);
@@ -54,9 +58,30 @@ public class CrimeLab {
             mCrimes.put(crime.getmId(),crime);
             }*/
     }
-
+    //数据库操作键值对象
+    public static ContentValues getContentValues(Crime crime){
+        ContentValues contentValues=new ContentValues();
+        contentValues.put(CrimeTable.Cols.UUID,crime.getmId().toString());
+        contentValues.put(CrimeTable.Cols.TITLE,crime.getmTitle());
+        contentValues.put(CrimeTable.Cols.DATE,crime.getmDate().getTime());
+        contentValues.put(CrimeTable.Cols.SOLVED,crime.ismSolved()?1:0);
+        return contentValues;
+    }
+    //获取数据库中的Crime 对象集合
     public List<Crime> getmCrimes() {
-        return new ArrayList<>(mCrimes.values());
+        //return new ArrayList<>();
+        List<Crime>crimes=new ArrayList<>();
+        CrimeCursorWrapper cursor=queryCrimes(null,null);
+        try {
+            cursor.moveToFirst();
+            while(cursor.isAfterLast()){
+                crimes.add(cursor.getCrime());
+                cursor.moveToNext();
+            }
+        }finally {
+            cursor.close();
+        }
+        return crimes;
     }
 
     /*public void setmCrimes(List<Crime> mCrimes) {
@@ -68,21 +93,63 @@ public class CrimeLab {
             if(crime.getmId().equals(uuid)){
                 return crime;
             }
+        }*/
+        //return null;
+       //return mCrimes.get(uuid);
+        CrimeCursorWrapper cursor=queryCrimes(
+                CrimeTable.Cols.UUID+" = ?",
+                new String[]{uuid.toString()});
+        try {
+            if (cursor.getCount()==0) {return null;}
+            cursor.moveToFirst();
+            return cursor.getCrime();
+        }finally {
+            cursor.close();
         }
-        return null;*/
-       return mCrimes.get(uuid);
     }
 
     public void add (Crime crime){
-        mCrimes.put(crime.getmId(),crime);
+        ContentValues contentValues = getContentValues(crime);
+        //数据插入数据库
+        mDatabase.insert(CrimeTable.NAME,null,contentValues);
+        //mCrimes.put(crime.getmId(),crime);
+    }
+
+    //查询数据库
+
+    /**
+     *
+     * @param whereClause 查询字段
+     * @param whereArgs  查询字段字符串对象
+     * @return
+     */
+    public CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs){
+        Cursor cursor = mDatabase.query(
+                CrimeTable.NAME,null,//null 表示取全部字段的值
+                whereClause,whereArgs,
+                null,null,null
+        );
+        return new CrimeCursorWrapper(cursor);
+    }
+
+    //更新数据库
+    public void updateCrime(Crime crime){
+          String uuidStr=crime.getmId().toString();
+          ContentValues contentValues=getContentValues(crime);
+          mDatabase.update(CrimeTable.NAME,contentValues,
+                  CrimeTable.Cols.UUID+" = ?",
+                  new String[]{uuidStr});
     }
 
     public void deleteCrime(UUID uuid){
-        for (Iterator<Map.Entry<UUID,Crime>> it = mCrimes.entrySet().iterator(); it.hasNext();){
+        /*for (Iterator<Map.Entry<UUID,Crime>> it = mCrimes.entrySet().iterator(); it.hasNext();){
             Map.Entry<UUID,Crime> item = it.next();
             if(item.getKey().equals(uuid)){
                 it.remove();
             }
-         }
+         }*/
+
+        mDatabase.delete(CrimeTable.NAME,CrimeTable.Cols.UUID+" = ?",
+                new String[]{uuid.toString()});
         }
 }
