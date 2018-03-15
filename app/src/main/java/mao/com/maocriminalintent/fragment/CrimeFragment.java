@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -172,5 +173,24 @@ public class CrimeFragment extends Fragment {
             mCrime.setmDate(date);
             updateDate();
         }
+    }
+    //消息回复
+    private String getCrimeReport(){
+        String solvedString =null;
+        if(mCrime.ismSolved()){
+           solvedString=getString(R.string.crime_report_solved);
+        }else {
+            solvedString=getString(R.string.crime_report_unsolved);
+        }
+        String dateFromat = "EEE,MMM dd";
+        String  dateStr = DateFormat.format(dateFromat, mCrime.getmDate()).toString();
+        String suspect=mCrime.getmSuspect();
+        if(suspect==null){
+            suspect=getString(R.string.crime_report_no_suspect);
+        }else {
+            suspect=getString(R.string.crime_report_suspect);
+        }
+        String report = getString(R.string.crime_report,mCrime.getmTitle(), dateStr, solvedString, suspect);
+        return report;
     }
 }

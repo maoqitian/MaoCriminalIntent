@@ -16,6 +16,7 @@ public class Crime {
     private boolean mSolved;
     private int mRequiresPolice;
 
+    private String mSuspect;//嫌疑人姓名
 
 
     private int position;
@@ -77,5 +78,13 @@ public class Crime {
 
     public void setPosition(int position) {
         this.position = position;
+    }
+
+    public String getmSuspect() {
+        return mSuspect;
+    }
+
+    public void setmSuspect(String mSuspect) {
+        this.mSuspect = mSuspect;
     }
 }

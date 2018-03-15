@@ -58,13 +58,14 @@ public class CrimeLab {
             mCrimes.put(crime.getmId(),crime);
             }*/
     }
-    //数据库操作键值对象
+    //数据库操作键值对象 （写入）
     public static ContentValues getContentValues(Crime crime){
         ContentValues contentValues=new ContentValues();
         contentValues.put(CrimeTable.Cols.UUID,crime.getmId().toString());
         contentValues.put(CrimeTable.Cols.TITLE,crime.getmTitle());
         contentValues.put(CrimeTable.Cols.DATE,crime.getmDate().getTime());
         contentValues.put(CrimeTable.Cols.SOLVED,crime.ismSolved()?1:0);
+        contentValues.put(CrimeTable.Cols.SUSPECT,crime.getmSuspect());
         return contentValues;
     }
     //获取数据库中的Crime 对象集合
@@ -74,12 +75,13 @@ public class CrimeLab {
         CrimeCursorWrapper cursor=queryCrimes(null,null);
         try {
             cursor.moveToFirst();
-            while(cursor.isAfterLast()){
+            while(!cursor.isAfterLast()){//有数据则直接取出
                 crimes.add(cursor.getCrime());
                 cursor.moveToNext();
             }
         }finally {
             cursor.close();
+            //mDatabase.close();
         }
         return crimes;
     }
@@ -125,11 +127,12 @@ public class CrimeLab {
      */
     public CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs){
         Cursor cursor = mDatabase.query(
-                CrimeTable.NAME,null,//null 表示取全部字段的值
-                whereClause,whereArgs,
-                null,null,null
+                CrimeTable.NAME, null,//null 表示取全部字段的值
+                whereClause, whereArgs,
+                null, null, null
         );
-        return new CrimeCursorWrapper(cursor);
+            return new CrimeCursorWrapper(cursor);
+
     }
 
     //更新数据库

@@ -55,7 +55,6 @@ public class CrimeListFragment extends Fragment {
         // 其管理的fragment应接收onCreateOptionsMenu(...)方法的 调用指令。要通知FragmentManager，
         Log.e("毛麒添","CrimeListFragment onCreate");
         setHasOptionsMenu(true);
-        crimeLab=CrimeLab.getInstance(getActivity());
     }
 
     @Nullable
@@ -124,6 +123,7 @@ public class CrimeListFragment extends Fragment {
 
 
     public void updateUI() {
+        crimeLab=CrimeLab.getInstance(getActivity());
         List<Crime> crimes = crimeLab.getmCrimes();
         if(crimes.size()==0){
             mEmptyLayout.setVisibility(View.VISIBLE);
