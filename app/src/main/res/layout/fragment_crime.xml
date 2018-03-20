@@ -48,4 +48,10 @@
         android:layout_height="wrap_content"
         android:text="@string/crime_report_text"
         />
+    <Button
+        android:id="@+id/call_crime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/call_crime"
+        />
 </LinearLayout>

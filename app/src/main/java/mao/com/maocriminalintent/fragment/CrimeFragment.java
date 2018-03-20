@@ -1,11 +1,18 @@
 package mao.com.maocriminalintent.fragment;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.ShareCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -19,12 +26,12 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.Date;
 import java.util.UUID;
 
 import mao.com.maocriminalintent.CrimeListActivity;
-import mao.com.maocriminalintent.CrimePagerActivity;
 import mao.com.maocriminalintent.R;
 import mao.com.maocriminalintent.instance.CrimeLab;
 import mao.com.maocriminalintent.model.Crime;
@@ -35,22 +42,38 @@ import mao.com.maocriminalintent.util.MyUtils;
  * 模型及视图对象交互的控制器
  */
 
-public class CrimeFragment extends Fragment {
+public class CrimeFragment extends Fragment implements View.OnClickListener{
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";//对话框Fragment的 tag
     private static final String DIALOG_TIME = "DialogTime";//对话框Fragment的 tag
     private static final int REQUEST_DATE = 0;//DatePickerFragment 数据返回请求码
     private static final int REQUEST_TIME = 1;//TimePickerFragment 数据返回请求码
+    private static final int REQUEST_CONTACT = 2;//联系人返回码
+
+    private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+
+
     private Crime mCrime;
+
     private EditText mTitleField;
-    private Button mDateButton;
-    private Button mTimeButton;
+    private Button mDateButton;//日期
+    private Button mTimeButton;//时间
+    private Button mReportButton;
+    private Button mSuspectButton;
+    private Button mCallSuspectButton;
     private CheckBox mSolvedCheckBox;
+
     private UUID crimeId;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
+        } else {
+            // Android version is lesser than 6.0 or the permission is already granted.
+        }
         setHasOptionsMenu(true);
         //mCrime=new Crime();
         //Intent 的Extra 已经存储了对应的crimeId 根据这个UUID 来获取对应的 Crime的对象
@@ -78,6 +101,9 @@ public class CrimeFragment extends Fragment {
         mSolvedCheckBox = view.findViewById(R.id.crime_solved);
         mDateButton = view.findViewById(R.id.crime_date);
         mTimeButton=view.findViewById(R.id.crime_time);
+        mReportButton=view.findViewById(R.id.report_crime);
+        mSuspectButton=view.findViewById(R.id.choose_crime_suspect);
+        mCallSuspectButton=view.findViewById(R.id.call_crime);
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -95,24 +121,11 @@ public class CrimeFragment extends Fragment {
             }
         });
         updateDate();
-        mDateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fragmentManager=getFragmentManager();
-                DatePickerFragment dialog=DatePickerFragment.newInstance(mCrime.getmDate());
-                dialog.setTargetFragment(CrimeFragment.this,REQUEST_DATE);
-                dialog.show(fragmentManager,DIALOG_DATE);
-            }
-        });
-        mTimeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fragmentManager=getFragmentManager();
-                TimePickerFragment timePickerFragment=TimePickerFragment.newInstance(mCrime.getmDate());
-                timePickerFragment.setTargetFragment(CrimeFragment.this,REQUEST_TIME);
-                timePickerFragment.show(fragmentManager,DIALOG_TIME);
-            }
-        });
+        mDateButton.setOnClickListener(this);
+        mTimeButton.setOnClickListener(this);
+        mReportButton.setOnClickListener(this);
+        mSuspectButton.setOnClickListener(this);
+        mCallSuspectButton.setOnClickListener(this);
         mSolvedCheckBox.setChecked(mCrime.ismSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -120,6 +133,22 @@ public class CrimeFragment extends Fragment {
                 mCrime.setmSolved(isChecked);
             }
         });
+        if(mCrime.getmSuspect()!=null){
+           mSuspectButton.setText(mCrime.getmSuspect());
+        }
+
+        //如果找不到联系人应用，点击选择联系人按钮应用就会崩溃，使用PackageManager来检查是否有对应的Activity
+        PackageManager packageManager=getActivity().getPackageManager();
+        if(packageManager.resolveActivity(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),
+                PackageManager.MATCH_DEFAULT_ONLY)==null){
+             mSuspectButton.setEnabled(false);
+        }
+        if(mCrime.getmSuspectContact()==null){
+            mCallSuspectButton.setEnabled(false);
+        }else {
+            mCallSuspectButton.setEnabled(true);
+            mCallSuspectButton.setText(mCrime.getmSuspectContact());
+        }
         return view;
     }
 
@@ -172,6 +201,44 @@ public class CrimeFragment extends Fragment {
             Date date= (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_TIME);
             mCrime.setmDate(date);
             updateDate();
+        }else if(requestCode==REQUEST_CONTACT&&data!=null){//处理联系人数据,并将选择的联系人作为嫌疑人
+            Uri uri = data.getData();
+            String[] queryFiles = {ContactsContract.Contacts.DISPLAY_NAME,
+                    ContactsContract.Contacts._ID};//查询名字 id
+            Cursor cursor = getActivity().getContentResolver().query(uri, queryFiles, null, null, null);
+            String suspectContactId=null;//嫌疑人id 根据这个id 再去查电话表得到嫌疑人电话
+            try {
+                if(cursor.getCount()==0){
+                    return;
+                }
+                cursor.moveToFirst();
+                String suspectName = cursor.getString(0);
+                mCrime.setmSuspect(suspectName);
+                mSuspectButton.setText(suspectName);
+
+                suspectContactId=cursor.getString(1);
+            }finally {
+                cursor.close();
+            }
+            Cursor queryContact=null;
+
+            queryContact = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID+ " = ?", new String[]{suspectContactId}, null);
+
+            try{
+                if(queryContact.getCount()==0){
+                    return;
+                }
+                queryContact.moveToFirst();
+                int index = queryContact.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                String phoneNumber = queryContact.getString(index);
+                mCrime.setmSuspectContact(phoneNumber);
+                mCallSuspectButton.setEnabled(true);
+                mCallSuspectButton.setText(phoneNumber);
+
+            }finally {
+                queryContact.close();
+            }
         }
     }
     //消息回复
@@ -192,5 +259,62 @@ public class CrimeFragment extends Fragment {
         }
         String report = getString(R.string.crime_report,mCrime.getmTitle(), dateStr, solvedString, suspect);
         return report;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission is granted
+            } else {
+                Toast.makeText(getActivity(), "Until you grant the permission, we canot display the names", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        FragmentManager fragmentManager=null;
+        Intent intent=null;
+        switch (view.getId()){
+            case R.id.crime_date:
+                fragmentManager=getFragmentManager();
+                DatePickerFragment dialog=DatePickerFragment.newInstance(mCrime.getmDate());
+                dialog.setTargetFragment(CrimeFragment.this,REQUEST_DATE);
+                dialog.show(fragmentManager,DIALOG_DATE);
+                break;
+            case R.id.crime_time:
+                fragmentManager=getFragmentManager();
+                TimePickerFragment timePickerFragment=TimePickerFragment.newInstance(mCrime.getmDate());
+                timePickerFragment.setTargetFragment(CrimeFragment.this,REQUEST_TIME);
+                timePickerFragment.show(fragmentManager,DIALOG_TIME);
+                break;
+            case R.id.report_crime:
+                /*intent=new Intent(Intent.ACTION_VIEW);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT,getCrimeReport());
+                intent.putExtra(Intent.EXTRA_SUBJECT,getString(R.string.crime_report_subject));
+                intent = Intent.createChooser(intent, getString(R.string.send_report));
+                startActivity(intent);*/
+                //使用IntentBuilder来创建发消息的Intent
+                ShareCompat.IntentBuilder intentBuilder= ShareCompat.IntentBuilder.from(getActivity());
+                intentBuilder.setType("text/plain");
+                intentBuilder.setSubject(getString(R.string.send_report));
+                intentBuilder.setText(getCrimeReport());
+                intentBuilder.setChooserTitle(R.string.send_report);
+                intentBuilder.startChooser();
+                break;
+            case R.id.choose_crime_suspect:
+                intent=new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                startActivityForResult(intent,REQUEST_CONTACT);
+                break;
+            case R.id.call_crime:
+                //拨打嫌疑人电话
+                intent=new Intent(Intent.ACTION_DIAL);//开启打电话应用并填好号码，待用户点击确认拨打
+                intent.setData(Uri.parse("tel:"+mCrime.getmSuspectContact()));
+                startActivity(intent);
+                break;
+        }
     }
 }

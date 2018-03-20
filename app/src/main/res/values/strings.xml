@@ -17,10 +17,11 @@
     <string name="set_crime_start_time">设置陋习开始时间</string>
     <string name="crime_suspect_text">选择嫌疑人</string>
     <string name="crime_report_text">发送嫌疑人消息</string>
-    <string name="crime_report">%1$s!The crime was discovered on %2$s. %3$s, and %4$s</string>     <string name="crime_report_solved">The case is solved</string>
-    <string name="crime_report_unsolved">The case is not solved</string>
-    <string name="crime_report_no_suspect">there is no suspect.</string>
-    <string name="crime_report_suspect">the suspect is %s.</string>
+    <string name="crime_report">%1$s!这个陋习被发现在 %2$s. %3$s, 和 %4$s</string>     <string name="crime_report_solved">The case is solved</string>
+    <string name="crime_report_unsolved">这个案件还没有解决</string>
+    <string name="crime_report_no_suspect">没有嫌疑人.</string>
+    <string name="crime_report_suspect">这个嫌疑人是 %s.</string>
     <string name="crime_report_subject">CriminalIntent Crime Report</string>
-    <string name="send_report">Send crime report via</string>
+    <string name="send_report">发送犯罪报告</string>
+    <string name="call_crime">拨打嫌疑人电话</string>
 </resources>

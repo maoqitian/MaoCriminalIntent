@@ -66,6 +66,7 @@ public class CrimeLab {
         contentValues.put(CrimeTable.Cols.DATE,crime.getmDate().getTime());
         contentValues.put(CrimeTable.Cols.SOLVED,crime.ismSolved()?1:0);
         contentValues.put(CrimeTable.Cols.SUSPECT,crime.getmSuspect());
+        contentValues.put(CrimeTable.Cols.SUSPECTCONTACT,crime.getmSuspectContact());
         return contentValues;
     }
     //获取数据库中的Crime 对象集合

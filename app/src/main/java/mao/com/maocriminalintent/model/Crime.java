@@ -18,8 +18,9 @@ public class Crime {
 
     private String mSuspect;//嫌疑人姓名
 
-
     private int position;
+
+    private String mSuspectContact;//联系嫌疑人电话
 
     public Crime(){
         this(UUID.randomUUID());
@@ -86,5 +87,12 @@ public class Crime {
 
     public void setmSuspect(String mSuspect) {
         this.mSuspect = mSuspect;
+    }
+    public String getmSuspectContact() {
+        return mSuspectContact;
+    }
+
+    public void setmSuspectContact(String mSuspectContact) {
+        this.mSuspectContact = mSuspectContact;
     }
 }
