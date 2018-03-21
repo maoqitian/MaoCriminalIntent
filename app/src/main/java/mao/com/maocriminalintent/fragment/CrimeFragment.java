@@ -26,6 +26,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.Date;
@@ -63,6 +65,9 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
     private Button mSuspectButton;
     private Button mCallSuspectButton;
     private CheckBox mSolvedCheckBox;
+
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
 
     private UUID crimeId;
     @Override
@@ -104,6 +109,8 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         mReportButton=view.findViewById(R.id.report_crime);
         mSuspectButton=view.findViewById(R.id.choose_crime_suspect);
         mCallSuspectButton=view.findViewById(R.id.call_crime);
+        mPhotoButton = view.findViewById(R.id.crime_camera);
+        mPhotoView = view.findViewById(R.id.crime_photo);
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -126,6 +133,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         mReportButton.setOnClickListener(this);
         mSuspectButton.setOnClickListener(this);
         mCallSuspectButton.setOnClickListener(this);
+        mPhotoButton.setOnClickListener(this);
         mSolvedCheckBox.setChecked(mCrime.ismSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -278,19 +286,19 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         FragmentManager fragmentManager=null;
         Intent intent=null;
         switch (view.getId()){
-            case R.id.crime_date:
+            case R.id.crime_date://日期设置
                 fragmentManager=getFragmentManager();
                 DatePickerFragment dialog=DatePickerFragment.newInstance(mCrime.getmDate());
                 dialog.setTargetFragment(CrimeFragment.this,REQUEST_DATE);
                 dialog.show(fragmentManager,DIALOG_DATE);
                 break;
-            case R.id.crime_time:
+            case R.id.crime_time://时间设置
                 fragmentManager=getFragmentManager();
                 TimePickerFragment timePickerFragment=TimePickerFragment.newInstance(mCrime.getmDate());
                 timePickerFragment.setTargetFragment(CrimeFragment.this,REQUEST_TIME);
                 timePickerFragment.show(fragmentManager,DIALOG_TIME);
                 break;
-            case R.id.report_crime:
+            case R.id.report_crime://发送报告
                 /*intent=new Intent(Intent.ACTION_VIEW);
                 intent.setType("text/plain");
                 intent.putExtra(Intent.EXTRA_TEXT,getCrimeReport());
@@ -305,7 +313,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
                 intentBuilder.setChooserTitle(R.string.send_report);
                 intentBuilder.startChooser();
                 break;
-            case R.id.choose_crime_suspect:
+            case R.id.choose_crime_suspect://选择嫌疑人
                 intent=new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
                 startActivityForResult(intent,REQUEST_CONTACT);
                 break;
@@ -314,6 +322,9 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
                 intent=new Intent(Intent.ACTION_DIAL);//开启打电话应用并填好号码，待用户点击确认拨打
                 intent.setData(Uri.parse("tel:"+mCrime.getmSuspectContact()));
                 startActivity(intent);
+                break;
+            case R.id.crime_camera://拍照
+
                 break;
         }
     }

@@ -33,6 +33,11 @@ public class Crime {
         mDate=new Date();
     }
 
+    //获取照片名称
+    public String getPhotoFileName(){
+        return "IMG_"+getmId().toString()+".jpg";
+    }
+
     public UUID getmId() {
         return mId;
     }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -19,7 +20,7 @@ import mao.com.maocriminalintent.model.Crime;
 
 /**
  * Created by maoqi on 2018/2/25 0025.
- * 单例  将Crime 对象保存
+ * 单例  将Crime 对象保存  sqlite 数据持久化
  */
 
 public class CrimeLab {
@@ -156,4 +157,14 @@ public class CrimeLab {
         mDatabase.delete(CrimeTable.NAME,CrimeTable.Cols.UUID+" = ?",
                 new String[]{uuid.toString()});
         }
+
+    /**
+     *  获取照片文件
+      * @param crime
+     * @return
+     */
+    public File getPhotoFile(Crime crime){
+        File filesDir = mContext.getFilesDir();//获取/data/data/<包名>/files目录
+        return new File(filesDir,crime.getPhotoFileName());
+    }
 }
