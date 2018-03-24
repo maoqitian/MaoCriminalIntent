@@ -4,15 +4,19 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -22,6 +26,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -30,7 +35,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import mao.com.maocriminalintent.CrimeListActivity;
@@ -49,11 +56,13 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";//对话框Fragment的 tag
     private static final String DIALOG_TIME = "DialogTime";//对话框Fragment的 tag
+    private static final String DIALOG_PHOTO = "DialogPhoto";//对话框Fragment的 tag
     private static final int REQUEST_DATE = 0;//DatePickerFragment 数据返回请求码
     private static final int REQUEST_TIME = 1;//TimePickerFragment 数据返回请求码
     private static final int REQUEST_CONTACT = 2;//联系人返回码
 
     private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+    private static final int REQUEST_PHOTO = 3;//打开相机
 
 
     private Crime mCrime;
@@ -70,6 +79,12 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
     private ImageView mPhotoView;
 
     private UUID crimeId;
+
+    private File mPhotoFile;//获取照片文件
+
+    private PackageManager packageManager;
+
+    private Intent cameraIntent=null;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +101,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         //改为从fragment的argument中获取UUID,这样CrimeFragment类变得通用，而不依靠特定的Activity
         crimeId= (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime= CrimeLab.getInstance(getActivity()).getCrime(crimeId);
+        mPhotoFile=CrimeLab.getInstance(getActivity()).getPhotoFile(mCrime);
     }
 
     //附加argument给 fragment
@@ -133,6 +149,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         mReportButton.setOnClickListener(this);
         mSuspectButton.setOnClickListener(this);
         mCallSuspectButton.setOnClickListener(this);
+        mPhotoView.setOnClickListener(this);
         mPhotoButton.setOnClickListener(this);
         mSolvedCheckBox.setChecked(mCrime.ismSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -146,7 +163,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         }
 
         //如果找不到联系人应用，点击选择联系人按钮应用就会崩溃，使用PackageManager来检查是否有对应的Activity
-        PackageManager packageManager=getActivity().getPackageManager();
+        packageManager=getActivity().getPackageManager();
         if(packageManager.resolveActivity(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),
                 PackageManager.MATCH_DEFAULT_ONLY)==null){
              mSuspectButton.setEnabled(false);
@@ -157,6 +174,20 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
             mCallSuspectButton.setEnabled(true);
             mCallSuspectButton.setText(mCrime.getmSuspectContact());
         }
+
+        //启动相机Intent
+        cameraIntent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        //检查是否存在相机应用
+        boolean canTakePhoto=mPhotoFile!=null && cameraIntent.resolveActivity(packageManager)!=null;
+        mPhotoButton.setEnabled(canTakePhoto);
+        //updatePhotoView();
+        ViewTreeObserver viewTreeObserver = mPhotoView.getViewTreeObserver();
+        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                updatePhotoView(mPhotoView.getWidth(), mPhotoView.getHeight());
+            }
+        });
         return view;
     }
 
@@ -247,6 +278,12 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
             }finally {
                 queryContact.close();
             }
+        }else if(requestCode==REQUEST_PHOTO){//拍照返回
+            /*Uri uri = FileProvider.getUriForFile(getActivity(),
+                    "mao.com.maocriminalintent.fileprovider", mPhotoFile);
+            //关闭文件访问
+            getActivity().revokeUriPermission(uri,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);*/
+            updatePhotoView(mPhotoView.getWidth(),mPhotoView.getHeight());
         }
     }
     //消息回复
@@ -269,15 +306,26 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         return report;
     }
 
+    //设置相机拍摄的图片
+    private void updatePhotoView(int width, int height){
+        if(mPhotoFile==null || !mPhotoFile.exists()){
+            mPhotoView.setImageBitmap(null);
+        }else {
+            Bitmap bitmap = MyUtils.getScaledBitmap(mPhotoFile.getPath(),width,height);
+            mPhotoView.setImageBitmap(bitmap);
+        }
+    }
+
+    //权限检查 读取联系人
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            /*if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
             } else {
                 Toast.makeText(getActivity(), "Until you grant the permission, we canot display the names", Toast.LENGTH_SHORT).show();
-            }
+            }*/
         }
     }
 
@@ -324,7 +372,27 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
                 startActivity(intent);
                 break;
             case R.id.crime_camera://拍照
-
+                Uri uri = FileProvider.getUriForFile(getActivity(),
+                        "mao.com.maocriminalintent.fileprovider", mPhotoFile);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT,uri);//指定存储路径
+                List<ResolveInfo> cameraActivities=getActivity().getPackageManager().queryIntentActivities(cameraIntent,PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo activity:cameraActivities) {
+                    //写入权限
+                   getActivity().grantUriPermission(activity.activityInfo.packageName,uri,
+                           Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+                startActivityForResult(cameraIntent,REQUEST_PHOTO);
+                break;
+            case R.id.crime_photo:
+                if(mPhotoFile==null || !mPhotoFile.exists()){
+                    mPhotoView.setImageBitmap(null);
+                }else {
+                //点击拍摄的照片，显示放大版的照片
+                fragmentManager=getFragmentManager();
+                PhotoFragment photoFragment=PhotoFragment.newInstance(mPhotoFile.getPath());
+                photoFragment.setTargetFragment(CrimeFragment.this,REQUEST_PHOTO);
+                photoFragment.show(fragmentManager,DIALOG_PHOTO);
+                }
                 break;
         }
     }
