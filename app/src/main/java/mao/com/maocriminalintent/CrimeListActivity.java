@@ -22,4 +22,9 @@ public class CrimeListActivity extends SingleFragmentActivity {
     protected Fragment createFragment() {
         return new CrimeListFragment();
     }
+
+    @Override
+    protected int getLayoutResId() {//使用别名加载不同资源布局
+        return R.layout.activity_masterdetail;
+    }
 }
