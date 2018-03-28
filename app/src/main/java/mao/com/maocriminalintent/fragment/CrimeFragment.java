@@ -2,6 +2,7 @@ package mao.com.maocriminalintent.fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -33,7 +34,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
+
 
 import java.io.File;
 import java.util.Date;
@@ -85,6 +86,13 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
     private PackageManager packageManager;
 
     private Intent cameraIntent=null;
+
+    private CrimeCallbacks mCallbcaks;
+
+    public interface CrimeCallbacks{
+        void onUpdateCrime(Crime crime);
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,6 +110,18 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         crimeId= (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime= CrimeLab.getInstance(getActivity()).getCrime(crimeId);
         mPhotoFile=CrimeLab.getInstance(getActivity()).getPhotoFile(mCrime);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbcaks= (CrimeCallbacks) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbcaks=null;
     }
 
     //附加argument给 fragment
@@ -136,6 +156,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 mCrime.setmTitle(charSequence.toString());//根据输入的标题给model 设置数据
+                updateCrime();
             }
 
             @Override
@@ -156,6 +177,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 mCrime.setmSolved(isChecked);
+                updateCrime();
             }
         });
         if(mCrime.getmSuspect()!=null){
@@ -234,11 +256,13 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
         if(requestCode==REQUEST_DATE){
            Date date= (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
            mCrime.setmDate(date);
+           updateCrime();
            updateDate();
         }
         else if(requestCode==REQUEST_TIME){
             Date date= (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_TIME);
             mCrime.setmDate(date);
+            updateCrime();
             updateDate();
         }else if(requestCode==REQUEST_CONTACT&&data!=null){//处理联系人数据,并将选择的联系人作为嫌疑人
             Uri uri = data.getData();
@@ -253,6 +277,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
                 cursor.moveToFirst();
                 String suspectName = cursor.getString(0);
                 mCrime.setmSuspect(suspectName);
+                updateCrime();
                 mSuspectButton.setText(suspectName);
 
                 suspectContactId=cursor.getString(1);
@@ -273,6 +298,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
                 String phoneNumber = queryContact.getString(index);
                 mCrime.setmSuspectContact(phoneNumber);
                 mCallSuspectButton.setEnabled(true);
+                updateCrime();
                 mCallSuspectButton.setText(phoneNumber);
 
             }finally {
@@ -283,6 +309,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
                     "mao.com.maocriminalintent.fileprovider", mPhotoFile);
             //关闭文件访问
             getActivity().revokeUriPermission(uri,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);*/
+            updateCrime();
             updatePhotoView(mPhotoView.getWidth(),mPhotoView.getHeight());
         }
     }
@@ -314,6 +341,11 @@ public class CrimeFragment extends Fragment implements View.OnClickListener{
             Bitmap bitmap = MyUtils.getScaledBitmap(mPhotoFile.getPath(),width,height);
             mPhotoView.setImageBitmap(bitmap);
         }
+    }
+
+    public void updateCrime(){
+        CrimeLab.getInstance(getActivity()).updateCrime(mCrime);
+        mCallbcaks.onUpdateCrime(mCrime);
     }
 
     //权限检查 读取联系人

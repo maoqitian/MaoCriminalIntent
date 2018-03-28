@@ -23,7 +23,7 @@ import mao.com.maocriminalintent.model.Crime;
  * 使用ViewPager 来托管CrimeFragment
  */
 
-public class CrimePagerActivity extends AppCompatActivity {
+public class CrimePagerActivity extends AppCompatActivity implements CrimeFragment.CrimeCallbacks{
     private ViewPager mViewPager;
     private List<Crime> mCrimes;
     private static final String EXTRA_CRIME_ID="mao.com.maocriminalintent.model.crime_id";
@@ -70,5 +70,10 @@ public class CrimePagerActivity extends AppCompatActivity {
         Intent intent = new Intent(this, CrimeListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
+    }
+
+    @Override
+    public void onUpdateCrime(Crime crime) {
+
     }
 }

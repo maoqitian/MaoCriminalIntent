@@ -1,12 +1,16 @@
 package mao.com.maocriminalintent.fragment;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,6 +51,14 @@ public class CrimeListFragment extends Fragment {
     private Button mAddBtn;
 
     private CrimeLab crimeLab;
+
+    private Callbacks mCallbacks;//回调接口方便平板主从界面Activity响应Fragment
+
+    public interface Callbacks {
+        void onCrimeSelected(Crime crime);
+    }
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +67,18 @@ public class CrimeListFragment extends Fragment {
         // 其管理的fragment应接收onCreateOptionsMenu(...)方法的 调用指令。要通知FragmentManager，
         Log.e("毛麒添","CrimeListFragment onCreate");
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks= (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks=null;
     }
 
     @Nullable
@@ -90,8 +114,11 @@ public class CrimeListFragment extends Fragment {
             case R.id.new_crime:
                 Crime crime=new Crime();
                 CrimeLab.getInstance(getActivity()).add(crime);
-                Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
-                startActivity(intent);
+               /* Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
+                startActivity(intent);*/
+               //改成调用回调接口方法
+                updateUI();
+                mCallbacks.onCrimeSelected(crime);
                 return true;
             case R.id.show_subtitle:
                 mSubtitleVisible=!mSubtitleVisible;
@@ -133,8 +160,9 @@ public class CrimeListFragment extends Fragment {
                 public void onClick(View view) {
                     Crime crime=new Crime();
                     CrimeLab.getInstance(getActivity()).add(crime);
-                    Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
-                    startActivity(intent);
+                  /*  Intent intent=CrimePagerActivity.newIntent(getActivity(),crime.getmId());
+                    startActivity(intent);*/
+                    mCallbacks.onCrimeSelected(crime);
                 }
             });
         }else {
@@ -144,6 +172,20 @@ public class CrimeListFragment extends Fragment {
         if(mAdapter==null){//适配器没有则创建
             mAdapter=new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
+            //添加滑动删除
+            ItemTouchHelper itemTouchHelper=new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT) {
+                @Override
+                public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                    return false;
+                }
+
+                @Override
+                public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
+                    mAdapter.onItemDelete(viewHolder.getAdapterPosition());
+                    Toast.makeText(getActivity(),"删除了该条记录",Toast.LENGTH_LONG).show();
+                }
+            });
+            itemTouchHelper.attachToRecyclerView(mCrimeRecyclerView);
         }else {//否则根据更改的数据刷新 RecyclerView 刷新对应的位置
             mAdapter.setCrimes(crimes);
             if (currentPosition != -1) {
@@ -190,12 +232,13 @@ public class CrimeListFragment extends Fragment {
             //Toast.makeText(getActivity(),mCrime.getmTitle() + " clicked!", Toast.LENGTH_SHORT).show();
             //Intent intent=new Intent(getActivity(), CrimeActivity.class);
             //Intent intent=CrimeActivity.newIntent(getActivity(),mCrime.getmId());
-            Intent intent= CrimePagerActivity.newIntent(getActivity(),mCrime.getmId());
+           /* Intent intent= CrimePagerActivity.newIntent(getActivity(),mCrime.getmId());
             Bundle args = new Bundle();
             args.putSerializable("crime_id",mCrime.getmId());
-                        CrimeListFragment listFragment = new CrimeListFragment();
-                       listFragment.setArguments(args);
-            startActivity(intent);
+            CrimeListFragment listFragment = new CrimeListFragment();
+            listFragment.setArguments(args);
+            startActivity(intent);*/
+            mCallbacks.onCrimeSelected(mCrime);
             currentPosition=this.getAdapterPosition();
         }
     }
@@ -272,6 +315,12 @@ public class CrimeListFragment extends Fragment {
             }else {
                 return 1;
             }
+        }
+
+        public void onItemDelete(int position){
+            CrimeLab.getInstance(getActivity()).deleteCrime(mCrimes.get(position).getmId());
+            notifyItemRemoved(position);
+            updateUI();
         }
     }
 }
