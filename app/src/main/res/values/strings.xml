@@ -1,27 +1,28 @@
 <resources>
     <string name="app_name">MaoCriminalIntent</string>
-    <string name="crime_title_hint">输入陋习的标题</string>
-    <string name="crime_title_label">标题</string>
-    <string name="crime_details_label">详细</string>
-    <string name="crime_solved_label">解决</string>
-    <string name="date_picker_title">陋习日期:</string>
-    <string name="new_crime">新增陋习</string>
-    <string name="show_subtitle">显示标题</string>
-    <string name="hide_subtitle">隐藏标题</string>
+    <string name="crime_title_hint">Enter a title for the crime.</string>
+    <string name="crime_title_label">Title</string>
+    <string name="crime_details_label">Details</string>
+    <string name="crime_solved_label">Solved</string>
+    <string name="date_picker_title">Date of crime:</string>
+    <string name="new_crime">New Crime</string>
+    <string name="show_subtitle">Show Subtitle</string>
+    <string name="hide_subtitle">Hide Subtitle</string>
     <plurals name="subtitle_plural">
         <item quantity="one">%1$d crime</item>
         <item quantity="other">%1$d crimes</item>
     </plurals>
     <string name="subtitle_format">%1$d crimes</string>
-    <string name="delete_crime">删除陋习</string>
-    <string name="set_crime_start_time">设置陋习开始时间</string>
-    <string name="crime_suspect_text">选择嫌疑人</string>
-    <string name="crime_report_text">发送嫌疑人消息</string>
-    <string name="crime_report">%1$s!这个陋习被发现在 %2$s. %3$s, 和 %4$s</string>     <string name="crime_report_solved">The case is solved</string>
-    <string name="crime_report_unsolved">这个案件还没有解决</string>
-    <string name="crime_report_no_suspect">没有嫌疑人.</string>
-    <string name="crime_report_suspect">这个嫌疑人是 %s.</string>
+    <string name="delete_crime">Delete crime</string>
+    <string name="set_crime_start_time">Crime start time</string>
+    <string name="crime_suspect_text">Choose Suspect</string>
+    <string name="crime_report_text">Send Crime Report</string>
+    <string name="crime_report">%1$s!The crime was discovered on %2$s. %3$s, 和 %4$s</string>
+    <string name="crime_report_solved">The case is solved</string>
+    <string name="crime_report_unsolved">The case is not solved</string>
+    <string name="crime_report_no_suspect">there is no suspect..</string>
+    <string name="crime_report_suspect">the suspect is %s.</string>
     <string name="crime_report_subject">CriminalIntent Crime Report</string>
-    <string name="send_report">发送犯罪报告</string>
-    <string name="call_crime">拨打嫌疑人电话</string>
+    <string name="send_report">end crime report via</string>
+    <string name="call_crime">call crime</string>
 </resources>

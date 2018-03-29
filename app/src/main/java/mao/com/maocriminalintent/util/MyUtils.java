@@ -22,8 +22,8 @@ public class MyUtils {
      * @return yyyy年MM月dd日 HH时mm分ss秒
      */
     public static String getFormatDate(Date date){
-        Locale locale = new Locale("zh", "CN");
-        SimpleDateFormat formatter = new SimpleDateFormat("EEEE-yyyy年MM月dd日 HH时mm分ss秒",locale);
+        //Locale locale = new Locale("zh", "CN");
+        SimpleDateFormat formatter = new SimpleDateFormat("EEEE-yyyy-MM/dd  HH:mm:ss");
         return formatter.format(date);
     }
 
